@@ -1,0 +1,9 @@
+.venv/
+__pycache__/
+.pytest_cache/
+.env
+data/raw/
+data/private/
+data/public/
+web/node_modules/
+web/dist/
