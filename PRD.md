@@ -16,9 +16,9 @@ https://www.google.com/maps/search/?api=1&query=<latitude>,<longitude>
 
 ## 2. Problem
 
-Users need one map showing recent fire detections across Indonesia islands, plus latest reporting time and evidence details. Google Maps mobile can show wildfire markers, but does not provide stable public API for full historical Indonesia fire-point ingestion.
+Users need one map showing recent fire detections across all 38 Indonesian provinces, plus latest reporting time and evidence details. Google Maps mobile can show wildfire markers, but does not provide stable public API for full historical Indonesia fire-point ingestion.
 
-Raw satellite detections can be duplicated across sensors, lack island/province names, and become too numerous for browser map if all history loads at once.
+Raw satellite detections can be duplicated across sensors, lack province classification, and become too numerous for browser map if all history loads at once.
 
 ## 3. Goals
 
@@ -44,11 +44,11 @@ Raw satellite detections can be duplicated across sensors, lack island/province 
 
 ### Public website visitor
 
-Needs current map, fire-marker details, island filter, severity filter, last update, and source caveat.
+Needs current map, fire-marker details, province and province-group filters, severity filter, last update, and source caveat.
 
 ### Report user
 
-Needs downloadable CSV/GeoJSON, daily summary, historical query, counts by island/province/severity, and source timestamps.
+Needs downloadable CSV/GeoJSON, daily summary, historical query, counts by province/province-group/severity, and source timestamps.
 
 ### Project administrator
 
@@ -104,7 +104,7 @@ https://github.com/scrapfly/scrapfly-scrapers/tree/main/google-scraper
 
 Optional use:
 
-- Collect public news/context links for queries such as `kebakaran hutan Indonesia <island>`.
+- Collect public news/context links for queries such as `kebakaran hutan Indonesia <province>`.
 - Collect title, URL, snippet, query, capture time, and `source_type="google_search"`.
 - Store output privately under `data/private/context/`.
 
@@ -241,8 +241,10 @@ One satellite detection equals one `fire_observation`.
   "scan_km": 0.38,
   "track_km": 0.36,
   "daynight": "D",
-  "island": "Kalimantan",
   "province": "Kalimantan Tengah",
+  "province_group": "Pulau Kalimantan",
+  "province_capital": "Palangkaraya",
+  "classification": "Kalimantan Tengah",
   "severity": "high",
   "severity_reason": "FRP 42.8 MW; confidence nominal",
   "status": "satellite_detected",
@@ -274,37 +276,69 @@ Use packaged, versioned Indonesia boundary polygon in CRS `EPSG:4326`.
 
 Only point geometries inside or touching Indonesia boundary can enter public output.
 
-### 9.2 Island assignment
+### 9.2 Province classification — required 38 provinces
 
-Use versioned island polygons in `EPSG:4326`.
+Use packaged Indonesia 2022/2023 province polygons in `EPSG:4326`. The dataset must contain exactly 38 polygon features and use official `PROVINSI` names.
 
-Required initial labels:
+Classify each accepted observation by polygon containment. Public output must include:
 
 ```text
-Sumatra
-Java
-Kalimantan
-Sulawesi
-Papua
-Maluku
-Nusa Tenggara
-unknown
+province
+province_group
+province_capital
+classification
 ```
+
+`classification` equals `province`. `province_group` and `province_capital` come only from approved metadata below.
+
+| Province group | Province | Capital |
+|---|---|---|
+| Pulau Sumatera | Aceh | Banda Aceh |
+| Pulau Sumatera | Sumatera Utara | Medan |
+| Pulau Sumatera | Sumatera Barat | Padang |
+| Pulau Sumatera | Riau | Pekanbaru |
+| Pulau Sumatera | Kepulauan Riau | Tanjung Pinang |
+| Pulau Sumatera | Jambi | Jambi |
+| Pulau Sumatera | Bengkulu | Bengkulu |
+| Pulau Sumatera | Sumatera Selatan | Palembang |
+| Pulau Sumatera | Kepulauan Bangka Belitung | Pangkal Pinang |
+| Pulau Sumatera | Lampung | Bandar Lampung |
+| Pulau Jawa | DKI Jakarta | Jakarta |
+| Pulau Jawa | Banten | Serang |
+| Pulau Jawa | Jawa Barat | Bandung |
+| Pulau Jawa | Jawa Tengah | Semarang |
+| Pulau Jawa | Daerah Istimewa Yogyakarta | Yogyakarta |
+| Pulau Jawa | Jawa Timur | Surabaya |
+| Kepulauan Nusa Tenggara & Bali | Bali | Denpasar |
+| Kepulauan Nusa Tenggara & Bali | Nusa Tenggara Barat | Mataram |
+| Kepulauan Nusa Tenggara & Bali | Nusa Tenggara Timur | Kupang |
+| Pulau Kalimantan | Kalimantan Barat | Pontianak |
+| Pulau Kalimantan | Kalimantan Tengah | Palangkaraya |
+| Pulau Kalimantan | Kalimantan Selatan | Banjarbaru |
+| Pulau Kalimantan | Kalimantan Timur | Samarinda |
+| Pulau Kalimantan | Kalimantan Utara | Tanjung Selor |
+| Pulau Sulawesi | Sulawesi Utara | Manado |
+| Pulau Sulawesi | Gorontalo | Gorontalo |
+| Pulau Sulawesi | Sulawesi Tengah | Palu |
+| Pulau Sulawesi | Sulawesi Barat | Mamuju |
+| Pulau Sulawesi | Sulawesi Selatan | Makassar |
+| Pulau Sulawesi | Sulawesi Tenggara | Kendari |
+| Kepulauan Maluku & Pulau Papua | Maluku | Ambon |
+| Kepulauan Maluku & Pulau Papua | Maluku Utara | Sofifi |
+| Kepulauan Maluku & Pulau Papua | Papua | Jayapura |
+| Kepulauan Maluku & Pulau Papua | Papua Barat | Manokwari |
+| Kepulauan Maluku & Pulau Papua | Papua Selatan | Merauke |
+| Kepulauan Maluku & Pulau Papua | Papua Tengah | Nabire |
+| Kepulauan Maluku & Pulau Papua | Papua Pegunungan | Jayawijaya |
+| Kepulauan Maluku & Pulau Papua | Papua Barat Daya | Sorong |
 
 Rules:
 
-- Assign polygon containing observation point.
-- If none contains point, assign `unknown`.
-- Do not assign nearest island automatically.
-- Store boundary dataset URL, license, retrieval date, CRS, and selected label field in README.
-
-### 9.3 Province assignment
-
-Use versioned Indonesian province polygons.
-
-- Assign containing province.
-- `NULL` allowed when no polygon match.
-- Province remains supplemental. Island filter must still work without province.
+- Do not classify point by province-center coordinate or nearest capital.
+- Do not assign nearest province when a point does not intersect a province polygon.
+- Indonesia-boundary point with no province-polygon match must use `province="unknown"`, `province_group="unknown"`, and `province_capital=null`.
+- Record boundary dataset URL, license, retrieval date, CRS, property name `PROVINSI`, and the 38-feature count in README.
+- Test representative coordinates in every province group and assert metadata dictionary covers exactly all 38 province names.
 
 ## 10. Severity calculation
 
@@ -375,8 +409,9 @@ Incident contract:
   "severity": "severe",
   "estimated_area_km2": 8.04,
   "estimated_area_method": "convex_hull_buffered_1km",
-  "island": "Kalimantan",
   "province": "Kalimantan Tengah",
+  "province_group": "Pulau Kalimantan",
+  "province_capital": "Palangkaraya",
   "status": "satellite_detected",
   "source": "NASA FIRMS"
 }
@@ -430,8 +465,9 @@ confidence text not null
 frp_mw numeric
 bright_ti4_k numeric
 daynight char(1)
-island text not null
-province text
+province text not null
+province_group text not null
+province_capital text
 severity text not null
 severity_reason text not null
 status text not null
@@ -456,8 +492,9 @@ max_frp_mw numeric
 severity text not null
 estimated_area_km2 numeric
 estimated_area_method text not null
-island text not null
-province text
+province text not null
+province_group text not null
+province_capital text
 status text not null
 source text not null
 centroid geometry(Point, 4326) not null
@@ -472,7 +509,8 @@ GiST fire_observations.geom
 GiST fire_incidents.centroid
 B-tree fire_observations.observed_at_utc
 B-tree fire_incidents.last_detected_at_utc
-B-tree island
+B-tree province
+B-tree province_group
 B-tree severity
 B-tree status
 ```
@@ -558,7 +596,7 @@ unknown: no successful source report
 ### 14.3 Incident map query
 
 ```text
-GET /api/v1/incidents?west=<float>&south=<float>&east=<float>&north=<float>&from=<ISO-UTC>&to=<ISO-UTC>&island=<name>&severity=<level>&limit=<int>
+GET /api/v1/incidents?west=<float>&south=<float>&east=<float>&north=<float>&from=<ISO-UTC>&to=<ISO-UTC>&province=<name>&province_group=<name>&severity=<level>&limit=<int>
 ```
 
 Requirements:
@@ -583,7 +621,7 @@ Returns full incident, member-observation count, source fields, status, caveat, 
 ### 14.5 Observation map query
 
 ```text
-GET /api/v1/observations?west=<float>&south=<float>&east=<float>&north=<float>&from=<ISO-UTC>&to=<ISO-UTC>&island=<name>&severity=<level>&limit=<int>
+GET /api/v1/observations?west=<float>&south=<float>&east=<float>&north=<float>&from=<ISO-UTC>&to=<ISO-UTC>&province=<name>&province_group=<name>&severity=<level>&limit=<int>
 ```
 
 Use only for high zoom. Same validation and limits as incidents.
@@ -611,8 +649,9 @@ Sensor
 Satellite
 Confidence
 FRP
-Island
 Province
+Province group
+Province capital
 Observation count for incidents
 Estimated detection area for incidents
 Severity reason
@@ -630,7 +669,8 @@ Satellite-derived estimate caveat
 Last 24 hours
 Last 7 days
 Custom date range
-Island
+Province
+Province group
 Severity
 ```
 
@@ -651,7 +691,7 @@ Severity
 6. Filter Indonesia boundary.
 7. Create stable observation IDs.
 8. Deduplicate in current batch.
-9. Assign island and province.
+9. Assign one of 38 provinces through polygon containment; derive province group and capital from approved metadata.
 10. Calculate satellite severity.
 11. Upsert observations transactionally.
 12. Build/update incidents.
@@ -717,7 +757,7 @@ SCRAPFLY_KEY        # optional
 | FR-02 | System stores exact raw CSV privately before parsing. |
 | FR-03 | System rejects invalid and out-of-Indonesia records. |
 | FR-04 | System creates deterministic observation IDs and deduplicates. |
-| FR-05 | System enriches records with island, province, severity, source, and timestamps. |
+| FR-05 | System classifies accepted records into one of 38 provinces using polygon containment, then adds province group, capital, severity, source, and timestamps. |
 | FR-06 | System keeps observation history across refreshes. |
 | FR-07 | System creates nearby/time-related incident clusters. |
 | FR-08 | System exports current GeoJSON, JSON summary, and semicolon/BOM CSV. |
@@ -734,20 +774,22 @@ SCRAPFLY_KEY        # optional
 | ID | Acceptance criterion |
 |---|---|
 | AC-01 | `firewatch refresh --days 1` writes successful ingestion run and public files after valid FIRMS response. |
-| AC-02 | Every public observation contains coordinates, detection time, source-report time, sensor, confidence, FRP when supplied, island, source, and severity. |
+| AC-02 | Every public observation contains coordinates, detection time, source-report time, sensor, confidence, FRP when supplied, province, province group, province capital, source, and severity. |
 | AC-03 | Duplicate source row appears once in database and public latest output. |
 | AC-04 | Point outside Indonesia boundary never appears in public output. |
-| AC-05 | Same refresh rerun does not increase observation count for identical rows. |
-| AC-06 | Two nearby points inside 5 km/24 h form one incident; points outside either threshold do not. |
-| AC-07 | Incident detail labels estimated area as estimate, not confirmed perimeter/burned area. |
-| AC-08 | `/api/v1/incidents` rejects date range over 31 days and limit over 1000 with HTTP 422. |
-| AC-09 | `/api/v1/metadata` returns source timestamp and correct fresh/stale status. |
-| AC-10 | CSV starts UTF-8 BOM and uses semicolon delimiter. |
-| AC-11 | GeoJSON is valid FeatureCollection with `[longitude, latitude]` coordinates. |
-| AC-12 | Website marker opens panel with all required detection/source fields. |
-| AC-13 | Website Google Maps link uses exact coordinate URL and no Google data is ingested. |
-| AC-14 | No test requires API key, network access, Google, FIRMS, or Scrapfly. |
-| AC-15 | Live smoke test validates real FIRMS result and records actual count/timestamp without inventing values. |
+| AC-05 | Province metadata dictionary covers exactly the required 38 province names, each with its specified group and capital. |
+| AC-06 | Point intersecting no province polygon exports `province="unknown"`, `province_group="unknown"`, and `province_capital=null`; no nearest-province fallback is used. |
+| AC-07 | Same refresh rerun does not increase observation count for identical rows. |
+| AC-08 | Two nearby points inside 5 km/24 h form one incident; points outside either threshold do not. |
+| AC-09 | Incident detail labels estimated area as estimate, not confirmed perimeter/burned area. |
+| AC-10 | `/api/v1/incidents` rejects date range over 31 days and limit over 1000 with HTTP 422. |
+| AC-11 | `/api/v1/metadata` returns source timestamp and correct fresh/stale status. |
+| AC-12 | CSV starts UTF-8 BOM and uses semicolon delimiter. |
+| AC-13 | GeoJSON is valid FeatureCollection with `[longitude, latitude]` coordinates. |
+| AC-14 | Website marker opens panel with all required detection/source fields. |
+| AC-15 | Website Google Maps link uses exact coordinate URL and no Google data is ingested. |
+| AC-16 | No test requires API key, network access, Google, FIRMS, or Scrapfly. |
+| AC-17 | Live smoke test validates real FIRMS result and records actual count/timestamp without inventing values. |
 
 ## 21. Test strategy
 
@@ -762,7 +804,7 @@ tests/test_config.py
 tests/test_models.py
 tests/test_firms.py
 tests/test_normalize.py
-tests/test_islands.py
+tests/test_geography.py
 tests/test_severity.py
 tests/test_incidents.py
 tests/test_repository.py
@@ -833,7 +875,7 @@ Actual output count and timestamp recorded in release note.
 
 - Project config, secrets, fixtures.
 - FIRMS fetch, raw storage, normalize, deduplicate.
-- Island/province geometry enrichment.
+- 38-province polygon classification and province metadata enrichment.
 - Severity calculation.
 - GeoJSON/JSON/CSV exports.
 
@@ -874,7 +916,7 @@ Actual output count and timestamp recorded in release note.
 
 1. Final production database host and backup target.
 2. Data retention after first year: permanent versus archive policy.
-3. Final island taxonomy: broad groups above versus every named Indonesian island.
+3. Province-boundary source update and review cadence after new national administrative divisions.
 4. Official source priority: SIPONGI/KLHK, BNPB, BPBD, Manggala Agni, BMKG.
 5. Is forest/peat mask required before launch? Required if product wording says “forest fires” rather than “satellite fire detections.”
 6. Production failure-notification destination.
