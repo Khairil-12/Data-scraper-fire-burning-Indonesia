@@ -1,0 +1,1 @@
+{"compilerOptions":{"tsBuildInfoFile":"./node_modules/.tmp/n","target":"ES2023","module":"ESNext","moduleResolution":"bundler","noEmit":true,"skipLibCheck":true},"include":["vite.config.ts"]}
