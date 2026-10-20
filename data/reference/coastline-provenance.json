@@ -1,0 +1,8 @@
+{
+  "source_url": "https://raw.githubusercontent.com/denyherianto/indonesia-geojson-topojson-maps-with-38-provinces/main/GeoJSON/indonesia-38-provinces.geojson",
+  "retrieved_at_utc": "2026-10-19T11:03:00Z",
+  "license_url": "https://github.com/denyherianto/indonesia-geojson-topojson-maps-with-38-provinces/blob/main/LICENSE",
+  "crs": "EPSG:4326",
+  "dataset_name": "indonesia-38-provinces-coastline",
+  "coastal_threshold_km": 5.0
+}
