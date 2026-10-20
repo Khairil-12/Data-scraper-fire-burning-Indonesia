@@ -26,11 +26,22 @@ class Hotspot:
     confidence: str
     frp_mw: float | None = None
     bright_ti4_k: float | None = None
+    bright_ti5_k: float | None = None
     scan_km: float | None = None
     track_km: float | None = None
     daynight: str | None = None
-    island: str = "unknown"
+    version: str | None = None
+    instrument: str | None = None
     province: str | None = None
+    geography_match_status: str = "matched"
+    distance_to_nearest_land_km: float | None = None
+    land_cover_class: str | None = None
+    land_cover_source: str | None = None
+    land_cover_version: str | None = None
+    land_cover_year: int | None = None
+    land_cover_classified_at_utc: str | None = None
+    dedupe_group_id: str | None = None
+    processing_level: str = "NRT"
     raw: dict[str, str] = field(default_factory=dict, compare=False)
 
     def __post_init__(self) -> None:
