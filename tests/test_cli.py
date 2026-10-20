@@ -30,3 +30,5 @@ def test_refresh_writes_latest_public_outputs(monkeypatch, tmp_path):
     assert summary["counts_by_sensor"] == {"VIIRS_SNPP_NRT": 1}
     assert manifest["status"] == "success"
     assert manifest["accepted"] == 1
+    assert manifest["historical_inserted_count"] == 1
+    assert (tmp_path / "data/public/fire_data_quality_latest.json").exists()
