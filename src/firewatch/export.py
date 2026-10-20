@@ -28,16 +28,27 @@ def _record(item: Hotspot, generated_at: datetime) -> dict[str, object]:
         "confidence": item.confidence,
         "frp_mw": item.frp_mw,
         "bright_ti4_k": item.bright_ti4_k,
+        "bright_ti5_k": item.bright_ti5_k,
+        "scan_km": item.scan_km,
+        "track_km": item.track_km,
         "daynight": item.daynight,
+        "version": item.version,
+        "instrument": item.instrument,
         "province": item.province or "unknown",
         "province_group": geography["province_group"],
         "province_capital": geography["capital"],
-        "classification": item.province or "unknown",
+        "geography_match_status": item.geography_match_status,
+        "distance_to_nearest_land_km": item.distance_to_nearest_land_km,
+        "land_cover_class": item.land_cover_class,
+        "land_cover_source": item.land_cover_source,
+        "land_cover_version": item.land_cover_version,
+        "land_cover_year": item.land_cover_year,
+        "land_cover_classified_at_utc": item.land_cover_classified_at_utc,
+        "dedupe_group_id": item.dedupe_group_id,
+        "processing_level": item.processing_level,
         "severity": item.severity,
-        "severity_reason": item.severity_reason,
-        "status": "satellite_detected",
+        "severity_method": item.severity_reason,
         "source": item.source,
-        "source_url": "https://firms.modaps.eosdis.nasa.gov/",
         "generated_at_utc": _timestamp(generated_at),
     }
 
@@ -49,7 +60,10 @@ def _atomic_write(path: Path, content: str, *, encoding: str = "utf-8") -> None:
 
 
 def write_public_exports(
-    hotspots: Iterable[Hotspot], generated_at: datetime, output_dir: Path
+    hotspots: Iterable[Hotspot],
+    generated_at: datetime,
+    output_dir: Path,
+    quality_report: dict[str, object] | None = None,
 ) -> None:
     """Write latest GeoJSON, summary JSON, and Excel-compatible CSV."""
     output_dir = Path(output_dir)
@@ -61,10 +75,18 @@ def write_public_exports(
     ]
     geojson = {"type": "FeatureCollection", "features": features}
     latest = max((record["last_source_report_at_utc"] for record in records), default=None)
+    raw_obs_count = len(records)
+    unique_groups = len({record["dedupe_group_id"] for record in records})
+    linked_count = sum(1 for record in records if record["dedupe_group_id"] and record["dedupe_group_id"] != record["id"])
     summary = {
         "generated_at_utc": _timestamp(generated_at),
         "last_source_report_at_utc": latest,
+        "raw_observation_count": raw_obs_count,
+        "unique_cross_sensor_group_count": unique_groups,
+        "cross_sensor_linked_observation_count": linked_count,
+        "cross_sensor_method": "cross_sensor_500m_30m_v1",
         "counts_by_province": dict(Counter(record["province"] or "unknown" for record in records)),
+        "counts_by_geography_match_status": dict(Counter(record["geography_match_status"] for record in records)),
         "counts_by_sensor": dict(Counter(record["sensor"] for record in records)),
         "source": "NASA FIRMS",
         "source_url": "https://firms.modaps.eosdis.nasa.gov/",
@@ -72,6 +94,8 @@ def write_public_exports(
     }
     _atomic_write(output_dir / "fire_points_latest.geojson", json.dumps(geojson, separators=(",", ":")))
     _atomic_write(output_dir / "fire_summary_latest.json", json.dumps(summary, separators=(",", ":")))
+    if quality_report is not None:
+        _atomic_write(output_dir / "fire_data_quality_latest.json", json.dumps(quality_report, indent=2))
     csv_path = output_dir / "fire_points_latest.csv"
     temp = csv_path.with_suffix(".csv.tmp")
     fieldnames = list(records[0]) if records else ["id", "latitude", "longitude"]
