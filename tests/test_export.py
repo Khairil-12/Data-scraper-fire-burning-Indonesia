@@ -9,7 +9,7 @@ def test_public_exports_have_valid_geojson_summary_and_excel_csv(tmp_path):
     item = Hotspot(
         source="NASA FIRMS", sensor="VIIRS_SNPP_NRT", satellite="N",
         acq_date="2026-10-19", acq_time="0210", latitude=-2.6701,
-        longitude=111.7182, confidence="nominal", frp_mw=42.8, island="Kalimantan", province="Kalimantan Tengah",
+        longitude=111.7182, confidence="nominal", frp_mw=42.8, province="Kalimantan Tengah",
     )
     write_public_exports([item], datetime(2026, 10, 19, 3, 0, tzinfo=timezone.utc), tmp_path)
 
@@ -20,7 +20,7 @@ def test_public_exports_have_valid_geojson_summary_and_excel_csv(tmp_path):
     assert geojson["type"] == "FeatureCollection"
     assert geojson["features"][0]["geometry"]["coordinates"] == [111.7182, -2.6701]
     assert geojson["features"][0]["properties"]["source"] == "NASA FIRMS"
-    assert geojson["features"][0]["properties"]["classification"] == "Kalimantan Tengah"
+    assert geojson["features"][0]["properties"]["province"] == "Kalimantan Tengah"
     assert geojson["features"][0]["properties"]["province_group"] == "Pulau Kalimantan"
     assert geojson["features"][0]["properties"]["province_capital"] == "Palangkaraya"
     assert summary["last_source_report_at_utc"] == "2026-10-19T02:10:00Z"
